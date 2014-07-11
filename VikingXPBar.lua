@@ -204,29 +204,59 @@ function VikingXPBar:RedrawPathXP()
 	if not PlayerPathLib then
 		return 0
 	end
-	
-	local nCurrentLevel = PlayerPathLib.GetPathLevel()
-	local nNextLevel = math.min(knMaxPathLevel, nCurrentLevel + 1)
 
-	local nLastLevelXP = PlayerPathLib.GetPathXPAtLevel(nCurrentLevel)
-	local nCurrentXP =  PlayerPathLib.GetPathXP() - nLastLevelXP
-	local nNeededXP = PlayerPathLib.GetPathXPAtLevel(nNextLevel) - nLastLevelXP
+	local unitPlayer = GameLib.GetPlayerUnit()
+	local nCurrentLevel = PlayerPathLib.GetPathLevel()
+	local tStats = unitPlayer:GetBasicStats()
+
+	if(tStats.nLevel < 50 and nCurrentLevel < 30) then
 	
-	local wndPathBarFill = self.wndMain:FindChild("PathBarContainer:PathBarFill")
-	wndPathBarFill:SetMax(nNeededXP)
-	wndPathBarFill:SetProgress(nCurrentXP)
-	
-	local ePathId = PlayerPathLib.GetPlayerPathType()
-	local wndPathIcon = self.wndMain:FindChild("PathIcon")
-	wndPathIcon:SetSprite(ktPathIcon[ePathId])
-	
-	if nNeededXP == 0 then
-		wndPathBarFill:SetMax(100)
-		wndPathBarFill:SetProgress(100)
-		return 100
+		local nNextLevel = math.min(knMaxPathLevel, nCurrentLevel + 1)
+
+		local nLastLevelXP = PlayerPathLib.GetPathXPAtLevel(nCurrentLevel)
+		local nCurrentXP =  PlayerPathLib.GetPathXP() - nLastLevelXP
+		local nNeededXP = PlayerPathLib.GetPathXPAtLevel(nNextLevel) - nLastLevelXP
+		
+		local wndPathBarFill = self.wndMain:FindChild("PathBarContainer:PathBarFill")
+		wndPathBarFill:SetMax(nNeededXP)
+		wndPathBarFill:SetProgress(nCurrentXP)
+		
+		local ePathId = PlayerPathLib.GetPlayerPathType()
+		local wndPathIcon = self.wndMain:FindChild("PathIcon")
+		wndPathIcon:SetSprite(ktPathIcon[ePathId])
+		
+		if nNeededXP == 0 then
+			wndPathBarFill:SetMax(100)
+			wndPathBarFill:SetProgress(100)
+			return 100
+		end
+
+		return math.min(99.9, nCurrentXP / nNeededXP * 100)
+
+	else
+		local nCurrentToDailyMax = GetPeriodicElderPoints()
+		local nEPDailyMax = GameLib.ElderPointsDailyMax
+		
+		local wndPathBarFill = self.wndMain:FindChild("PathBarContainer:PathBarFill")
+		wndPathBarFill:SetMax(nEPDailyMax +1000)
+		wndPathBarFill:SetProgress(nCurrentToDailyMax)
+		
+		local wndPathIcon = self.wndMain:FindChild("PathIcon")
+		wndPathIcon:SetSprite("")
+		
+		local currencyDisplay = self.wndMain:FindChild("CurrencyDisplay")
+		currencyDisplay:SetMoneySystem(Money.CodeEnumCurrencyType.ElderGems)
+		
+		local wndElderGem = self.wndMain:FindChild("ElderGem")
+		wndElderGem:Show(true)
+		
+		if nCurrentToDailyMax == nEPDailyMax then
+			return 100
+		else
+			return math.min(99.9, nCurrentToDailyMax / nEPDailyMax * 100)
+		end
 	end
-	
-	return math.min(99.9, nCurrentXP / nNeededXP * 100)
+
 end
 
 function VikingXPBar:ConfigurePathXPTooltip(unitPlayer)
